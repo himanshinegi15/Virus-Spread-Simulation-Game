@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Plague Simulator</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <!-- WELCOME SCREEN -->
+    <div id="screen-welcome">
+      <h1>PLAGUE SIMULATOR</h1>
+      <p>Evolve the Virus! Exterminate humanity before the cure is complete!</p>
+      <ul class="rules">
+        <li>
+          <b>Infectivity</b> — how fast the disease spreads between countries
+        </li>
+        <li>
+          <b>Severity</b> — kill rate; too high too early = hosts die before spreading the virus and you loose
+        </li>
+        <li>
+          <b>Points</b> — earn 3-10 points per day, spend on upgrades and sabotage cure
+        </li>
+        <li>
+          <b>Cure</b> — starts once detected (&gt;0.5% infected); sabotage it using dna points
+        </li>
+        <li><b>Win</b> — 100% of humanity dead before cure reaches 100%</li>
+        <li>
+          <b>Lose</b> — cure completes, or infected population dies before global spread
+        </li>
+      </ul>
+      <p class="pick-label">Select starting country:</p>
+      <div id="country-picker">Connecting…</div>
+    </div>
+
+    <!-- GAME PLAY SCREEN -->
+    <div id="screen-game">
+      <div class="topbar">
+        <span class="logo">PLAGUE</span>
+        <span class="badge">DAY <span id="hdr-day">1</span></span>
+        <span class="badge">INF <span id="hdr-inf">1</span></span>
+        <span class="badge">SEV <span id="hdr-sev">1</span></span>
+        <span class="badge">PTS <span id="hdr-pts">0</span></span>
+        <div class="cure-wrap" id="cure-wrap" style="display: none">
+          <span class="cure-label">CURE <span id="cure-hpct">0%</span></span>
+          <div class="cure-track">
+            <div class="cure-fill" id="cure-hfill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ticker" id="ticker"></div>
+
+      <div class="body">
+        <div class="left">
+          <svg
+            id="world-map"
+            viewBox="0 0 620 200"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <g id="map-lines"></g>
+            <g id="map-dots"></g>
+          </svg>
+          <table>
+            <thead>
+              <tr>
+                <th>Country</th>
+                <th>Pop</th>
+                <th>Infected</th>
+                <th>%Infected</th>
+                <th>Dead</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+
+        <div class="right">
+          <div class="box">
+            <h3>STATS</h3>
+            <div class="row">
+              <span class="k">Day</span> <span class="v" id="sb-day">1</span>
+            </div>
+            <div class="row">
+              <span class="k">Points</span>
+              <span class="v" id="sb-pts" style="color: var(--yellow)">20</span>
+            </div>
+            <div class="row">
+              <span class="k">Infectivity</span
+              ><span class="v" id="sb-inf" style="color: var(--green)">1</span>
+            </div>
+            <div class="row">
+              <span class="k">Severity</span>
+              <span class="v" id="sb-sev" style="color: var(--red)">1</span>
+            </div>
+          </div>
+
+          <div class="box">
+            <h3>GLOBAL</h3>
+            <div class="row">
+              <span class="k">Infected</span>
+              <span class="v" id="s-inf">0</span>
+            </div>
+            <div class="row">
+              <span class="k">Dead</span> <span class="v" id="s-dead">0</span>
+            </div>
+            <div class="row">
+              <span class="k">% alive</span>
+              <span class="v" id="s-pct">0%</span>
+            </div>
+            <div class="row">
+              <span class="k">Countries</span
+              ><span class="v" id="s-ctry">0/12</span>
+            </div>
+          </div>
+
+          <div class="cure-box" id="cure-box">
+            <h3>CURE RESEARCH</h3>
+            <div class="cure-big">
+              <div class="cure-big-fill" id="cure-bfill"></div>
+            </div>
+            <div class="row">
+              <span class="k">Countries cured</span
+              ><span class="v" id="cure-pct">Not detected</span>
+            </div>
+            <button
+              class="btn btn-cure"
+              id="btn-sabo"
+              onclick="doSabotage()"
+              disabled
+            >
+              <span id="sabo-lbl">Sabotage labs</span
+              ><span class="cost">20 pts</span>
+            </button>
+            <button
+              class="btn btn-cure"
+              id="btn-disinfo"
+              onclick="doDisinfo()"
+              disabled
+            >
+              <span>Spread disinfo</span><span class="cost">15 pts</span>
+            </button>
+          </div>
+
+          <div class="box">
+            <h3>UPGRADES</h3>
+            <button class="btn" id="btn-inf" onclick="upgrade('infectivity')">
+              <span>↑ Infectivity (<span id="v-inf">1</span>)</span
+              ><span class="cost">10 pts</span>
+            </button>
+            <button class="btn" id="btn-sev" onclick="upgrade('severity')">
+              <span>↑ Severity (<span id="v-sev">1</span>)</span
+              ><span class="cost">10 pts</span>
+            </button>
+          </div>
+
+          <div>
+            <button id="btn-next" onclick="nextDay()">▶ NEXT DAY</button>
+            <div class="hint">N / Space &nbsp;·&nbsp; I &nbsp;·&nbsp; S</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div id="screen-over">
+      <h1 id="over-h1"></h1>
+      <p id="over-msg"></p>
+      <pre id="over-stats"></pre>
+      <button id="play-again" onclick="restart()">Play Again</button>
+    </div>
+    <script src="app.js"></script>
+  </body>
+</html>
